@@ -30,7 +30,7 @@
 
       svg path {
         transition: all 0.4s ease;
-        stroke-dashoffset: 0;
+        /* stroke-dashoffset: 0; */
         /* animation: pass-by 3000ms cubic-bezier(0.785, 0.135, 0.15, 0.86)
           infinite both;
         stroke-dasharray: 7090;
@@ -46,30 +46,42 @@
       const { width, height } = document.body.getBoundingClientRect();
 
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-      const path = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "path"
-      );
-
-      path.setAttribute("d", `M 0 0`);
 
       svg.addEventListener("load", ({ target }) => {
-        const path = target.querySelector("path");
-        path.setAttribute("stroke-dasharray", path.getTotalLength());
+        target.onclick = function waat(e) {
+          let { path } = waat;
 
-        target.onclick = e => {
-          const rect = path.getBoundingClientRect();
+          const rect = target.getBoundingClientRect();
+          const xy = `${e.clientX - rect.x} ${e.clientY - rect.y}`;
 
-          const d =
-            path.getAttribute("d") +
-            ` L ${e.clientX - rect.x} ${e.clientY - rect.y}`;
+          if (path) {
+            const d =
+              path.getAttribute("d") +
+              ` L ${e.clientX - rect.x} ${e.clientY - rect.y}`;
 
-          path.setAttribute("d", d);
-          path.setAttribute("stroke-dasharray", path.getTotalLength());
+            path.setAttribute("d", d);
+            path.setAttribute("stroke-dashoffset", path.getTotalLength());
+            path.setAttribute("stroke-dasharray", path.getTotalLength());
+
+            svg.appendChild(path);
+
+            setTimeout(() => {
+              path.setAttribute("stroke-dashoffset", 0);
+              delete waat.path;
+            }, 20);
+
+            return;
+          }
+
+          waat.path = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path"
+          );
+
+          waat.path.setAttribute("d", "M " + xy);
         };
       });
 
-      svg.appendChild(path);
       document.body.appendChild(svg);
     </script>
   </body>
