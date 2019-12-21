@@ -45,55 +45,59 @@
     <script>
       const canvas = document.createElement("canvas");
       const { width, height } = document.body.getBoundingClientRect();
-      // Object.assign(canvas.style, { width: " 100%", height: "100%" });
       canvas.setAttribute("width", width);
       canvas.setAttribute("height", height);
       document.body.appendChild(canvas);
 
-      // canvas.onclick = function waat(e) {
-
-      // }
-
       if (canvas.getContext) {
         var ctx = canvas.getContext("2d");
 
-        // function draw(frame) {
-        //   const x = 110 + frame;
+        canvas.onclick = function waat(e) {
+          if (waat.clientX && waat.clientY) {
+            animate(
+              waat.clientX,
+              waat.clientY,
+              e.clientX - waat.clientX,
+              e.clientY - waat.clientY
+            );
 
-        //   console.log(x);
+            delete waat.clientX;
+            delete waat.clientY;
 
-        //   ctx.beginPath();
-        //   ctx.moveTo(x, 75);
-        //   ctx.lineTo(x + 1, 75);
-        //   ctx.stroke();
-        // }
+            return;
+          }
 
-        (function animate(
+          waat.clientX = e.clientX;
+          waat.clientY = e.clientY;
+        };
+
+        function animate(
+          x,
+          y,
+          finX,
+          finY,
           start = Date.now(),
-          previousDate = Date.now(),
-          x = 110,
-          line = 200
+          previousDate = Date.now()
         ) {
           const now = Date.now();
-          const ms = 300;
+          const ms = 2000;
 
           ctx.beginPath();
-          ctx.moveTo(x, 75);
-          ctx.lineTo((x += (line / ms) * (now - previousDate)), 80);
+          ctx.moveTo(x, y);
+          ctx.lineTo(
+            (x += (finX / ms) * (now - previousDate)),
+            (y += (finY / ms) * (now - previousDate))
+          );
+
           ctx.stroke();
-          // console.log("aaa", (x += (line / ms) * (now - previousDate))); viktig
 
           if (now - start < ms) {
-            window.requestAnimationFrame(() => animate(start, now, x));
+            window.requestAnimationFrame(() =>
+              animate(x, y, finX, finY, start, now)
+            );
           }
-        })();
+        }
       }
-      // const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      // const { width, height } = document.body.getBoundingClientRect();
-
-      // svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-
-      // svg.addEventListener("load", ({ target }) => {
     </script>
   </body>
 </html>
