@@ -52,7 +52,7 @@
       if (canvas.getContext) {
         var ctx = canvas.getContext("2d");
 
-        canvas.onclick = function waat(e) {
+        canvas.addEventListener("mousemove", function waat(e) {
           if (waat.clientX && waat.clientY) {
             animate(
               waat.clientX,
@@ -61,15 +61,17 @@
               e.clientY - waat.clientY
             );
 
-            delete waat.clientX;
-            delete waat.clientY;
+            // delete waat.clientX;
+            // delete waat.clientY;
 
             return;
           }
 
           waat.clientX = e.clientX;
           waat.clientY = e.clientY;
-        };
+        });
+
+        const colors = ["red", "blue"];
 
         function animate(
           x,
@@ -88,6 +90,9 @@
             (x += (finX / ms) * (now - previousDate)),
             (y += (finY / ms) * (now - previousDate))
           );
+
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = colors[Math.floor(Math.random() * colors.length)];
 
           ctx.stroke();
 
