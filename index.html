@@ -43,6 +43,8 @@
   </head>
   <body>
     <script>
+      var squareRotation = 0.0;
+
       function main() {
         const canvas = document.createElement("canvas");
         const { width, height } = document.body.getBoundingClientRect();
@@ -139,7 +141,21 @@
 
         const buffers = initBuffers(gl);
 
-        drawScene(gl, programInfo, buffers);
+        var then = 0;
+
+        // Draw the scene repeatedly
+        function render(now) {
+          now *= 0.001; // convert to seconds
+          const deltaTime = now - then;
+          then = now;
+
+          drawScene(gl, programInfo, buffers, deltaTime);
+
+          requestAnimationFrame(render);
+        }
+
+        requestAnimationFrame(render);
+
         console.log("hej");
       }
 
@@ -189,7 +205,7 @@
         };
       }
 
-      function drawScene(gl, programInfo, buffers) {
+      function drawScene(gl, programInfo, buffers, deltaTime) {
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clearDepth(1.0);
         gl.enable(gl.DEPTH_TEST);
@@ -208,6 +224,11 @@
         const modelViewMatrix = mat4.create();
 
         mat4.translate(modelViewMatrix, modelViewMatrix, [-0.0, 0.0, -6.0]);
+        mat4.rotate(modelViewMatrix, modelViewMatrix, squareRotation, [
+          0,
+          0,
+          1
+        ]);
 
         {
           const numComponents = 2;
@@ -267,6 +288,8 @@
           const vertexCount = 4;
           gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
         }
+
+        squareRotation += deltaTime;
       }
 
       window.onload = main;
