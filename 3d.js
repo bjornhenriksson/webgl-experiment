@@ -86,8 +86,6 @@ function main() {
     }
   };
 
-  const buffers = initBuffers(gl);
-
   let then = 0;
 
   // Draw the scene repeatedly
@@ -96,9 +94,9 @@ function main() {
     const deltaTime = now - then;
     then = now;
 
-    drawScene(gl, programInfo, buffers, deltaTime);
+    drawScene(gl, programInfo, deltaTime);
 
-    requestAnimationFrame(render);
+    // requestAnimationFrame(render);
   }
 
   requestAnimationFrame(render);
@@ -106,7 +104,7 @@ function main() {
   console.log("hej");
 }
 
-function initBuffers(gl) {
+function cube(gl, moveX = 0.0) {
   const positionBuffer = gl.createBuffer();
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -116,12 +114,15 @@ function initBuffers(gl) {
     -1.0,
     -1.0,
     1.0,
+
     1.0,
     -1.0,
     1.0,
+
     1.0,
     1.0,
     1.0,
+
     -1.0,
     1.0,
     1.0,
@@ -195,7 +196,20 @@ function initBuffers(gl) {
     -1.0,
     1.0,
     -1.0
-  ];
+  ].map((f, ix) => {
+    // if ((ix + 1) % 3 === 0) {
+    //   //translate Z
+    //   return f - moveBy;
+    // }
+
+    if (ix % 3 === 0) {
+      //translate X
+      console.log(ix);
+      return f - moveX; //translate distance
+    }
+
+    return f;
+  });
 
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
@@ -271,7 +285,9 @@ function initBuffers(gl) {
   };
 }
 
-function drawScene(gl, programInfo, buffers, deltaTime) {
+function drawScene(gl, programInfo, deltaTime) {
+  const buffersCollection = [cube(gl), cube(gl, 2), cube(gl, -2)];
+
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clearDepth(1.0);
   gl.enable(gl.DEPTH_TEST);
@@ -289,7 +305,7 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
 
   const modelViewMatrix = mat4.create();
 
-  mat4.translate(modelViewMatrix, modelViewMatrix, [-0.0, 0.0, -6.0]);
+  mat4.translate(modelViewMatrix, modelViewMatrix, [-0.0, 0.0, -7.5]);
   mat4.rotate(
     modelViewMatrix, // destination matrix
     modelViewMatrix, // matrix to rotate
@@ -297,44 +313,6 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     [0, 0, 1]
   );
   mat4.rotate(modelViewMatrix, modelViewMatrix, cubeRotation * 0.7, [0, 1, 0]);
-
-  {
-    const numComponents = 3;
-    const type = gl.FLOAT;
-    const normalize = false;
-    const stride = 0;
-
-    const offset = 0;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-    gl.vertexAttribPointer(
-      programInfo.attribLocations.vertexPosition,
-      numComponents,
-      type,
-      normalize,
-      stride,
-      offset
-    );
-    gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
-  }
-
-  {
-    const numComponents = 4;
-    const type = gl.FLOAT;
-    const normalize = false;
-    const stride = 0;
-    const offset = 0;
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-    gl.vertexAttribPointer(
-      programInfo.attribLocations.vertexColor,
-      numComponents,
-      type,
-      normalize,
-      stride,
-      offset
-    );
-    gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
-  }
 
   gl.useProgram(programInfo.program);
 
@@ -349,18 +327,57 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     modelViewMatrix
   );
 
-  {
-    const offset = 0;
-    const vertexCount = 4;
-    gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
-  }
+  buffersCollection.forEach(buffers => {
+    //start of cube
+    {
+      const numComponents = 3;
+      const type = gl.FLOAT;
+      const normalize = false;
+      const stride = 0;
 
-  {
-    const vertexCount = 36;
-    const type = gl.UNSIGNED_SHORT;
-    const offset = 0;
-    gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
-  }
+      const offset = 0;
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+      gl.vertexAttribPointer(
+        programInfo.attribLocations.vertexPosition,
+        numComponents,
+        type,
+        normalize,
+        stride,
+        offset
+      );
+      gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+    }
+
+    {
+      const numComponents = 4;
+      const type = gl.FLOAT;
+      const normalize = false;
+      const stride = 0;
+      const offset = 0;
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+      gl.vertexAttribPointer(
+        programInfo.attribLocations.vertexColor,
+        numComponents,
+        type,
+        normalize,
+        stride,
+        offset
+      );
+      gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
+    }
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
+
+    {
+      const vertexCount = 36;
+      const type = gl.UNSIGNED_SHORT;
+      const offset = 0;
+      gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+    }
+
+    //end of cube
+  });
 
   cubeRotation += deltaTime;
 }
