@@ -96,7 +96,7 @@ function main() {
 
     drawScene(gl, programInfo, deltaTime);
 
-    // requestAnimationFrame(render);
+    requestAnimationFrame(render);
   }
 
   requestAnimationFrame(render);
@@ -121,14 +121,14 @@ function cube(gl, moveX = 0.0) {
     cubeRotation * 0.7
   );
 
-  const front = Object.freeze([
+  const front = [
     [-1.0, -1.0, 1.0],
     [1.0, -1.0, 1.0],
     [1.0, 1.0, 1.0],
     [-1.0, -1.0, 1.0],
     [-1.0, 1.0, 1.0],
     [1.0, 1.0, 1.0]
-  ]);
+  ];
 
   const yQuat = degree =>
     quat.setAxisAngle(
@@ -154,14 +154,15 @@ function cube(gl, moveX = 0.0) {
   ];
 
   const positions = cube.reduce((acc, side) => {
-    // return [...acc, ...[].concat(...side)];
+    let rotatedCube = transformWithQuat(side, cubeQuat);
 
-    return acc.concat(...transformWithQuat(side, cubeQuat));
+    return acc.concat(
+      ...rotatedCube.map(c => {
+        return [c[0] + moveX, c[1], c[2]];
+      })
+    );
   }, []);
 
-  console.log(positions, "positions");
-
-  // const positions = [].concat(...cube);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
   const faceColors = [
@@ -194,7 +195,7 @@ function cube(gl, moveX = 0.0) {
 }
 
 function drawScene(gl, programInfo, deltaTime) {
-  const buffersCollection = [cube(gl)];
+  const buffersCollection = [cube(gl), cube(gl, -2.0), cube(gl, 2.0)];
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clearDepth(1.0);
