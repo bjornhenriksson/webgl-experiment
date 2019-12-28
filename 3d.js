@@ -96,12 +96,10 @@ function main() {
 
     drawScene(gl, programInfo, deltaTime);
 
-    // requestAnimationFrame(render);
+    requestAnimationFrame(render);
   }
 
   requestAnimationFrame(render);
-
-  console.log("hej");
 }
 
 function cube(gl, moveX = 0.0) {
@@ -109,107 +107,51 @@ function cube(gl, moveX = 0.0) {
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
+  //  vec3.create();
+  const veeec = vec3.normalize(vec3.create(), [1.0, 1.0, 0.0]);
+
+  const q = quat.create();
+  quat.setAxisAngle(q, veeec, cubeRotation * 0.7);
+
   const positions = [
     // Front face
-    -1.0,
-    -1.0,
-    1.0,
+    [-1.0, -1.0, 1.0],
+    [1.0, -1.0, 1.0],
+    [1.0, 1.0, 1.0],
+    [-1.0, -1.0, 1.0],
+    [-1.0, 1.0, 1.0],
+    [1.0, 1.0, 1.0]
 
-    1.0,
-    -1.0,
-    1.0,
+    // // Back face
+    // [-1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0],
 
-    1.0,
-    1.0,
-    1.0,
+    // // Top face
+    // [-1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0],
+    // // Bottom face
+    // [-1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0],
 
-    -1.0,
-    1.0,
-    1.0,
+    // // Right face
+    // [1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0],
 
-    // Back face
-    -1.0,
-    -1.0,
-    -1.0,
-    -1.0,
-    1.0,
-    -1.0,
-    1.0,
-    1.0,
-    -1.0,
-    1.0,
-    -1.0,
-    -1.0,
+    // // Left face
+    // [-1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0]
+  ].reduce((acc, val, ix) => {
+    vec3.transformQuat(val, val, q);
+    return [...acc, ...val];
+  }, []);
 
-    // Top face
-    -1.0,
-    1.0,
-    -1.0,
-    -1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    -1.0,
+  console.log(positions, "eyy");
 
-    // Bottom face
-    -1.0,
-    -1.0,
-    -1.0,
-    1.0,
-    -1.0,
-    -1.0,
-    1.0,
-    -1.0,
-    1.0,
-    -1.0,
-    -1.0,
-    1.0,
+  // const bosse = mat4.create();
 
-    // Right face
-    1.0,
-    -1.0,
-    -1.0,
-    1.0,
-    1.0,
-    -1.0,
-    1.0,
-    1.0,
-    1.0,
-    1.0,
-    -1.0,
-    1.0,
+  // mat4.translate(positions, positions, [-0.0, 1, 0.0]);
 
-    // Left face
-    -1.0,
-    -1.0,
-    -1.0,
-    -1.0,
-    -1.0,
-    1.0,
-    -1.0,
-    1.0,
-    1.0,
-    -1.0,
-    1.0,
-    -1.0
-  ].map((f, ix) => {
-    // if ((ix + 1) % 3 === 0) {
-    //   //translate Z
-    //   return f - moveBy;
-    // }
+  // const eyy = positions.slice(0, 15);
 
-    if (ix % 3 === 0) {
-      //translate X
-      console.log(ix);
-      return f - moveX; //translate distance
-    }
+  // mat4.rotate(eyy, eyy, 2, [0, 1, 0]);
 
-    return f;
-  });
+  // console.log(eyy, "eyy");
+  // console.log(mat3.create());
 
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
@@ -230,63 +172,14 @@ function cube(gl, moveX = 0.0) {
   gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 
-  const indexBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-  const indices = [
-    0,
-    1,
-    2,
-    0,
-    2,
-    3, // front
-    4,
-    5,
-    6,
-    4,
-    6,
-    7, // back
-    8,
-    9,
-    10,
-    8,
-    10,
-    11, // top
-    12,
-    13,
-    14,
-    12,
-    14,
-    15, // bottom
-    16,
-    17,
-    18,
-    16,
-    18,
-    19, // right
-    20,
-    21,
-    22,
-    20,
-    22,
-    23 // left
-  ];
-
-  gl.bufferData(
-    gl.ELEMENT_ARRAY_BUFFER,
-    new Uint16Array(indices),
-    gl.STATIC_DRAW
-  );
-
   return {
     position: positionBuffer,
-    color: colorBuffer,
-    indices: indexBuffer
+    color: colorBuffer
   };
 }
 
 function drawScene(gl, programInfo, deltaTime) {
-  const buffersCollection = [cube(gl), cube(gl, 2), cube(gl, -2)];
+  const buffersCollection = [cube(gl)];
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clearDepth(1.0);
@@ -306,13 +199,14 @@ function drawScene(gl, programInfo, deltaTime) {
   const modelViewMatrix = mat4.create();
 
   mat4.translate(modelViewMatrix, modelViewMatrix, [-0.0, 0.0, -7.5]);
-  mat4.rotate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to rotate
-    cubeRotation, // amount to rotate in radians
-    [0, 0, 1]
-  );
-  mat4.rotate(modelViewMatrix, modelViewMatrix, cubeRotation * 0.7, [0, 1, 0]);
+  // mat4.rotate(
+  //   modelViewMatrix, // destination matrix
+  //   modelViewMatrix, // matrix to rotate
+  //   cubeRotation, // amount to rotate in radians
+  //   [0, 0, 1]
+  // );
+
+  // mat4.rotate(modelViewMatrix, modelViewMatrix, cubeRotation * 0.7, [0, 1, 0]);
 
   gl.useProgram(programInfo.program);
 
@@ -334,8 +228,8 @@ function drawScene(gl, programInfo, deltaTime) {
       const type = gl.FLOAT;
       const normalize = false;
       const stride = 0;
-
       const offset = 0;
+
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
       gl.vertexAttribPointer(
         programInfo.attribLocations.vertexPosition,
@@ -367,13 +261,12 @@ function drawScene(gl, programInfo, deltaTime) {
       gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
     }
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
-
     {
-      const vertexCount = 36;
+      const vertexCount = 6;
       const type = gl.UNSIGNED_SHORT;
       const offset = 0;
-      gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+      // gl.drawArrays(gl.TRIANGLES, vertexCount, type, offset);
+      gl.drawArrays(gl.TRIANGLES, offset, vertexCount);
     }
 
     //end of cube
