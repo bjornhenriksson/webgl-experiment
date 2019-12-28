@@ -96,7 +96,7 @@ function main() {
 
     drawScene(gl, programInfo, deltaTime);
 
-    requestAnimationFrame(render);
+    // requestAnimationFrame(render);
   }
 
   requestAnimationFrame(render);
@@ -107,60 +107,75 @@ function cube(gl, moveX = 0.0) {
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
-  //  vec3.create();
-  const veeec = vec3.normalize(vec3.create(), [1.0, 1.0, 0.0]);
+  const transformWithQuat = (arr, quat) => {
+    return arr.reduce((acc, [...val], ix) => {
+      vec3.transformQuat(val, val, quat);
+      acc.push(val);
+      return acc;
+    }, []);
+  };
 
-  const q = quat.create();
-  quat.setAxisAngle(q, veeec, cubeRotation * 0.7);
+  const cubeQuat = quat.setAxisAngle(
+    quat.create(),
+    vec3.normalize(vec3.create(), [1.0, 1.0, 0.0]),
+    cubeRotation * 0.7
+  );
 
-  const positions = [
-    // Front face
+  const front = Object.freeze([
     [-1.0, -1.0, 1.0],
     [1.0, -1.0, 1.0],
     [1.0, 1.0, 1.0],
     [-1.0, -1.0, 1.0],
     [-1.0, 1.0, 1.0],
     [1.0, 1.0, 1.0]
+  ]);
 
-    // // Back face
-    // [-1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0],
+  const yQuat = degree =>
+    quat.setAxisAngle(
+      quat.create(),
+      vec3.normalize(vec3.create(), [0.0, 1.0, 0.0]),
+      degree * (Math.PI / 180)
+    );
 
-    // // Top face
-    // [-1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0],
-    // // Bottom face
-    // [-1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0],
+  const xQuat = degree =>
+    quat.setAxisAngle(
+      quat.create(),
+      vec3.normalize(vec3.create(), [1.0, 0.0, 0.0]),
+      degree * (Math.PI / 180)
+    );
 
-    // // Right face
-    // [1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0],
+  const cube = [
+    front,
+    transformWithQuat(front, yQuat(180)),
+    transformWithQuat(front, xQuat(90)),
+    transformWithQuat(front, xQuat(-90)),
+    transformWithQuat(front, yQuat(90)),
+    transformWithQuat(front, yQuat(-90))
+  ];
 
-    // // Left face
-    // [-1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0]
-  ].reduce((acc, val, ix) => {
-    vec3.transformQuat(val, val, q);
-    return [...acc, ...val];
+  const positions = cube.reduce((acc, side) => {
+    // return [...acc, ...[].concat(...side)];
+
+    return acc.concat(...transformWithQuat(side, cubeQuat));
   }, []);
 
-  console.log(positions, "eyy");
+  console.log(positions, "positions");
 
-  // const bosse = mat4.create();
-
-  // mat4.translate(positions, positions, [-0.0, 1, 0.0]);
-
-  // const eyy = positions.slice(0, 15);
-
-  // mat4.rotate(eyy, eyy, 2, [0, 1, 0]);
-
-  // console.log(eyy, "eyy");
-  // console.log(mat3.create());
-
+  // const positions = [].concat(...cube);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
   const faceColors = [
     [1.0, 1.0, 1.0, 1.0], // Front face: white
+    [1.0, 1.0, 1.0, 1.0], // Front face: white
+    [1.0, 0.0, 0.0, 1.0], // Back face: red
     [1.0, 0.0, 0.0, 1.0], // Back face: red
     [0.0, 1.0, 0.0, 1.0], // Top face: green
+    [0.0, 1.0, 0.0, 1.0], // Top face: green
+    [0.0, 0.0, 1.0, 1.0], // Bottom face: blue
     [0.0, 0.0, 1.0, 1.0], // Bottom face: blue
     [1.0, 1.0, 0.0, 1.0], // Right face: yellow
+    [1.0, 1.0, 0.0, 1.0], // Right face: yellow
+    [1.0, 0.0, 1.0, 1.0], // Left face: purple
     [1.0, 0.0, 1.0, 1.0] // Left face: purple
   ];
 
@@ -199,14 +214,6 @@ function drawScene(gl, programInfo, deltaTime) {
   const modelViewMatrix = mat4.create();
 
   mat4.translate(modelViewMatrix, modelViewMatrix, [-0.0, 0.0, -7.5]);
-  // mat4.rotate(
-  //   modelViewMatrix, // destination matrix
-  //   modelViewMatrix, // matrix to rotate
-  //   cubeRotation, // amount to rotate in radians
-  //   [0, 0, 1]
-  // );
-
-  // mat4.rotate(modelViewMatrix, modelViewMatrix, cubeRotation * 0.7, [0, 1, 0]);
 
   gl.useProgram(programInfo.program);
 
@@ -262,10 +269,9 @@ function drawScene(gl, programInfo, deltaTime) {
     }
 
     {
-      const vertexCount = 6;
+      const vertexCount = 36;
       const type = gl.UNSIGNED_SHORT;
       const offset = 0;
-      // gl.drawArrays(gl.TRIANGLES, vertexCount, type, offset);
       gl.drawArrays(gl.TRIANGLES, offset, vertexCount);
     }
 
