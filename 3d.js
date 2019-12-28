@@ -181,7 +181,7 @@ function cube(gl, moveX = 0.0) {
   ];
 
   const colors = faceColors.reduce((colors, c) => {
-    return colors.concat(c, c, c, c);
+    return colors.concat(c, c, c);
   }, []);
 
   const colorBuffer = gl.createBuffer();
