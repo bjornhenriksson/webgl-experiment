@@ -91,7 +91,6 @@ function main() {
   let previousClickedPixel;
 
   canvas.addEventListener("click", e => {
-    // console.log(e.clientX, e.clientY);
     clickPosition = {
       x: e.clientX,
       y: e.clientY
@@ -99,23 +98,23 @@ function main() {
   });
 
   const buffersCollection = [
-    [cube, gl, [-4.0, -2.0, 0.0]],
-    [cube, gl, [-2.0, -2.0, 0.0]],
-    [cube, gl, [0.0, -2.0, 0.0]],
-    [cube, gl, [2.0, -2.0, 0.0]],
-    [cube, gl, [4.0, -2.0, 0.0]],
+    [cube, gl, [-4.0, -2.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [-2.0, -2.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [0.0, -2.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [2.0, -2.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [4.0, -2.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
 
-    [cube, gl, [-4.0, 0.0, 0.0]],
-    [cube, gl, [-2.0, 0.0, 0.0]],
-    [cube, gl, [0.0, 0.0, 0.0]],
-    [cube, gl, [2.0, 0.0, 0.0]],
-    [cube, gl, [4.0, 0.0, 0.0]],
+    [cube, gl, [-4.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [-2.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [2.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [4.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
 
-    [cube, gl, [-4.0, 2.0, 0.0]],
-    [cube, gl, [-2.0, 2.0, 0.0]],
-    [cube, gl, [0.0, 2.0, 0.0]],
-    [cube, gl, [2.0, 2.0, 0.0]],
-    [cube, gl, [4.0, 2.0, 0.0]]
+    [cube, gl, [-4.0, 2.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [-2.0, 2.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [0.0, 2.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [2.0, 2.0, 0.0], [1.0, 1.0, 1.0, 1.0]],
+    [cube, gl, [4.0, 2.0, 0.0], [1.0, 1.0, 1.0, 1.0]]
   ];
 
   // Draw the scene repeatedly
@@ -131,10 +130,12 @@ function main() {
       clickPosition,
       buffersCollection.map((c, ix) => {
         if (previousClickedPixel && previousClickedPixel[2] === ix) {
-          buffersCollection[ix][2][2] = -3.0;
+          buffersCollection[ix][3] = [242, 5, 159] //rgb
+            .map(n => n / 255)
+            .concat(1.0);
         }
 
-        return c[0](c[1], c[2], ix / 255);
+        return c[0](c[1], c[2], c[3], ix / 255);
       })
     );
 
@@ -146,7 +147,7 @@ function main() {
   requestAnimationFrame(render);
 }
 
-function cube(gl, translate = [0.0, 0.0, 0.0], id = 0) {
+function cube(gl, translate, color, id = 0) {
   const positionBuffer = gl.createBuffer();
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -211,9 +212,9 @@ function cube(gl, translate = [0.0, 0.0, 0.0], id = 0) {
 
   const colors = [...Array(12).keys()].reduce((colors, c) => {
     return colors.concat(
-      [0.9, 0.9, 0.9, 1.0],
-      [1.0, 1.0, 1.0, 1.0],
-      [1.0, 1.0, 1.0, 1.0]
+      [color[0] - 0.1, color[1] - 0.1, color[2] - 0.1, 1.0],
+      color,
+      color
     );
   }, []);
 
@@ -292,6 +293,8 @@ function drawScene(
     modelViewMatrix
   );
 
+  let pixels;
+
   // render picking colors
   buffersCollection.forEach(buffers => {
     //start of cube
@@ -344,7 +347,7 @@ function drawScene(
   });
 
   if (clickPosition) {
-    var pixels = new Uint8Array(4);
+    pixels = new Uint8Array(4);
 
     gl.readPixels(
       clickPosition.x,
@@ -355,9 +358,9 @@ function drawScene(
       gl.UNSIGNED_BYTE,
       pixels
     );
-  }
 
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  }
 
   // // render correct colors
   buffersCollection.forEach(buffers => {
