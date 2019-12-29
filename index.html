@@ -1,17 +1,70 @@
 <html>
   <head>
+    <title>Björn Henriksson</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
+      @font-face {
+        font-family: "ManeropeGX";
+        src: url(ManropeGX.ttf) format("woff2-variations");
+        font-weight: 200 900;
+        font-style: normal;
+      }
+
       body {
+        font-family: "ManeropeGX";
         display: flex;
-        color: white;
         height: 100%;
         width: 100%;
         margin: 0;
+      }
+
+      canvas {
+        position: absolute;
+        cursor: pointer;
+      }
+
+      .center {
+        position: relative;
+        margin: auto;
+        color: white;
+        max-width: 80%;
+        pointer-events: none;
+      }
+
+      h1 {
+        font-variation-settings: "wght" 900;
+        text-transform: uppercase;
+        font-size: 3rem;
+        line-height: 3rem;
+      }
+
+      @media screen and (min-width: 640px) {
+        h1 {
+          font-size: 5rem;
+          line-height: 5rem;
+        }
+
+        .center {
+          max-width: 35%;
+        }
+      }
+
+      h2 {
+        font-variation-settings: "wght" 500;
+        font-size: 1.5rem;
       }
     </style>
     <script src="https://mdn.github.io/webgl-examples/tutorial/gl-matrix.js"></script>
   </head>
   <body>
+    <div class="center">
+      <h1>Hello and welcome to my world.</h1>
+      <h2>
+        My name is Björn Henriksson and this is where I experiment and learn.
+        And where you can get to know me. The background which you can hopefully
+        see is built in Vanilla JS using canvas and WebGL. Try clicking it ;)
+      </h2>
+    </div>
     <script src="3d.js"></script>
   </body>
 </html>
