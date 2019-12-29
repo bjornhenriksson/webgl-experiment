@@ -87,6 +87,36 @@ function main() {
   };
 
   let then = 0;
+  let clickPosition;
+  let previousClickedPixel;
+
+  canvas.addEventListener("click", e => {
+    // console.log(e.clientX, e.clientY);
+    clickPosition = {
+      x: e.clientX,
+      y: e.clientY
+    };
+  });
+
+  const buffersCollection = [
+    [cube, gl, [-4.0, -2.0, 0.0]],
+    [cube, gl, [-2.0, -2.0, 0.0]],
+    [cube, gl, [0.0, -2.0, 0.0]],
+    [cube, gl, [2.0, -2.0, 0.0]],
+    [cube, gl, [4.0, -2.0, 0.0]],
+
+    [cube, gl, [-4.0, 0.0, 0.0]],
+    [cube, gl, [-2.0, 0.0, 0.0]],
+    [cube, gl, [0.0, 0.0, 0.0]],
+    [cube, gl, [2.0, 0.0, 0.0]],
+    [cube, gl, [4.0, 0.0, 0.0]],
+
+    [cube, gl, [-4.0, 2.0, 0.0]],
+    [cube, gl, [-2.0, 2.0, 0.0]],
+    [cube, gl, [0.0, 2.0, 0.0]],
+    [cube, gl, [2.0, 2.0, 0.0]],
+    [cube, gl, [4.0, 2.0, 0.0]]
+  ];
 
   // Draw the scene repeatedly
   function render(now) {
@@ -94,7 +124,21 @@ function main() {
     const deltaTime = now - then;
     then = now;
 
-    drawScene(gl, programInfo, deltaTime);
+    previousClickedPixel = drawScene(
+      gl,
+      programInfo,
+      deltaTime,
+      clickPosition,
+      buffersCollection.map((c, ix) => {
+        if (previousClickedPixel && previousClickedPixel[2] === ix) {
+          buffersCollection[ix][2][2] = -3.0;
+        }
+
+        return c[0](c[1], c[2], ix / 255);
+      })
+    );
+
+    clickPosition = undefined;
 
     requestAnimationFrame(render);
   }
@@ -102,7 +146,7 @@ function main() {
   requestAnimationFrame(render);
 }
 
-function cube(gl, moveX = 0.0) {
+function cube(gl, translate = [0.0, 0.0, 0.0], id = 0) {
   const positionBuffer = gl.createBuffer();
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -158,45 +202,55 @@ function cube(gl, moveX = 0.0) {
 
     return acc.concat(
       ...rotatedCube.map(c => {
-        return [c[0] + moveX, c[1], c[2]];
+        return [c[0] + translate[0], c[1] + translate[1], c[2] + translate[2]];
       })
     );
   }, []);
 
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
-  const faceColors = [
-    [1.0, 1.0, 1.0, 1.0], // Front face: white
-    [1.0, 1.0, 1.0, 1.0], // Front face: white
-    [1.0, 0.0, 0.0, 1.0], // Back face: red
-    [1.0, 0.0, 0.0, 1.0], // Back face: red
-    [0.0, 1.0, 0.0, 1.0], // Top face: green
-    [0.0, 1.0, 0.0, 1.0], // Top face: green
-    [0.0, 0.0, 1.0, 1.0], // Bottom face: blue
-    [0.0, 0.0, 1.0, 1.0], // Bottom face: blue
-    [1.0, 1.0, 0.0, 1.0], // Right face: yellow
-    [1.0, 1.0, 0.0, 1.0], // Right face: yellow
-    [1.0, 0.0, 1.0, 1.0], // Left face: purple
-    [1.0, 0.0, 1.0, 1.0] // Left face: purple
-  ];
-
-  const colors = faceColors.reduce((colors, c) => {
-    return colors.concat(c, c, c);
+  const colors = [...Array(12).keys()].reduce((colors, c) => {
+    return colors.concat(
+      [0.9, 0.9, 0.9, 1.0],
+      [1.0, 1.0, 1.0, 1.0],
+      [1.0, 1.0, 1.0, 1.0]
+    );
   }, []);
 
   const colorBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 
+  const pickingColors = [...Array(12).keys()].reduce((colors, c) => {
+    return colors.concat(
+      [0.0, 0.0, id, 1.0],
+      [0.0, 0.0, id, 1.0],
+      [0.0, 0.0, id, 1.0]
+    );
+  }, []);
+
+  const pickingBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, pickingBuffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(pickingColors),
+    gl.STATIC_DRAW
+  );
+
   return {
     position: positionBuffer,
-    color: colorBuffer
+    color: colorBuffer,
+    picking: pickingBuffer
   };
 }
 
-function drawScene(gl, programInfo, deltaTime) {
-  const buffersCollection = [cube(gl), cube(gl, -2.0), cube(gl, 2.0)];
-
+function drawScene(
+  gl,
+  programInfo,
+  deltaTime,
+  clickPosition,
+  buffersCollection
+) {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clearDepth(1.0);
   gl.enable(gl.DEPTH_TEST);
@@ -214,7 +268,16 @@ function drawScene(gl, programInfo, deltaTime) {
 
   const modelViewMatrix = mat4.create();
 
-  mat4.translate(modelViewMatrix, modelViewMatrix, [-0.0, 0.0, -7.5]);
+  mat4.translate(modelViewMatrix, modelViewMatrix, [-0.0, 0.0, -6.0]);
+
+  // mat4.rotate(
+  //   modelViewMatrix, // destination matrix
+  //   modelViewMatrix, // matrix to rotate
+  //   cubeRotation, // amount to rotate in radians
+  //   [0, 0, 1]
+  // );
+
+  // mat4.rotate(modelViewMatrix, modelViewMatrix, cubeRotation * 0.7, [0, 1, 0]);
 
   gl.useProgram(programInfo.program);
 
@@ -229,6 +292,74 @@ function drawScene(gl, programInfo, deltaTime) {
     modelViewMatrix
   );
 
+  // render picking colors
+  buffersCollection.forEach(buffers => {
+    //start of cube
+    {
+      const numComponents = 3;
+      const type = gl.FLOAT;
+      const normalize = false;
+      const stride = 0;
+      const offset = 0;
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+      gl.vertexAttribPointer(
+        programInfo.attribLocations.vertexPosition,
+        numComponents,
+        type,
+        normalize,
+        stride,
+        offset
+      );
+      gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+    }
+
+    {
+      const numComponents = 4;
+      const type = gl.FLOAT;
+      const normalize = false;
+      const stride = 0;
+      const offset = 0;
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.picking);
+      gl.vertexAttribPointer(
+        programInfo.attribLocations.vertexColor,
+        numComponents,
+        type,
+        normalize,
+        stride,
+        offset
+      );
+      gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
+    }
+
+    {
+      const vertexCount = 36;
+      const type = gl.UNSIGNED_SHORT;
+      const offset = 0;
+      gl.drawArrays(gl.TRIANGLES, offset, vertexCount);
+    }
+
+    //end of cube
+  });
+
+  if (clickPosition) {
+    var pixels = new Uint8Array(4);
+
+    gl.readPixels(
+      clickPosition.x,
+      Math.abs(clickPosition.y - gl.drawingBufferHeight),
+      1,
+      1,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      pixels
+    );
+  }
+
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  // // render correct colors
   buffersCollection.forEach(buffers => {
     //start of cube
     {
@@ -280,4 +411,6 @@ function drawScene(gl, programInfo, deltaTime) {
   });
 
   cubeRotation += deltaTime;
+
+  return pixels;
 }
